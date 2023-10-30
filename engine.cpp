@@ -14,6 +14,17 @@
 #include "vec_mat.h"
 #include "cube.h"
 
+// To Do:
+// - Add a camera movement system.
+// - Add a lighting system.
+// - Add a texture system.
+// - Add a model loader.
+// - Add scene (model) organiser.
+//     - create a scene class.
+//     - let the class handle all the properties of the objects.
+//     - pass the class to the renderer.  
+
+
 int main(int argc, char* argv[])
 {
     // Create Window
