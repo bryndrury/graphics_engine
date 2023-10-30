@@ -11,13 +11,15 @@ public:
         std::vector<double> temp {1, 0, 0, 0, 0, cos(theta), -sin(theta), 0, 0, sin(theta), cos(theta), 0, 0, 0, 0, 1};
         setValues(temp);
     }
-    void updateTheta(std::chrono::duration<double> fElapstedTime, double rate) 
+    void updateTheta(std::chrono::duration<double> fElapstedTime, double r) 
     {
-        theta += rate * fElapstedTime.count();
-        setValues({1, 0, 0, 0, 0, cos(theta), -sin(theta), 0, 0, sin(theta), cos(theta), 0, 0, 0, 0, 1});
+        rate = r;
+        _theta = rate * fElapstedTime.count();
+        setValues({1, 0, 0, 0, 0, cos(_theta), -sin(_theta), 0, 0, sin(_theta), cos(_theta), 0, 0, 0, 0, 1});
     }
 private:
-    double theta = 0.0;
+    double _theta = 0.0;
+    double rate = 1.0;
 };
 
 class rotY : public Matrix
@@ -28,13 +30,15 @@ public:
         std::vector<double> temp {cos(theta), 0, sin(theta), 0, 0, 1, 0, 0, -sin(theta), 0, cos(theta), 0, 0, 0, 0, 1};
         setValues(temp);
     }
-    void updateTheta(std::chrono::duration<double> fElapstedTime, double rate) 
+    void updateTheta(std::chrono::duration<double> fElapstedTime, double r) 
     {
-        theta += rate * fElapstedTime.count(); 
-        setValues({cos(theta), 0, sin(theta), 0, 0, 1, 0, 0, -sin(theta), 0, cos(theta), 0, 0, 0, 0, 1});
+        rate = r;
+        _theta = rate * fElapstedTime.count(); 
+        setValues({cos(_theta), 0, sin(_theta), 0, 0, 1, 0, 0, -sin(_theta), 0, cos(_theta), 0, 0, 0, 0, 1});
     }
 private:
-    double theta = 0.0;
+    double _theta = 0.0;
+    double rate = 1.0;
 };
 
 class rotZ : public Matrix
@@ -43,15 +47,17 @@ public:
     rotZ(double theta) : Matrix(4, 4)
     {
         _theta = theta;
-        setValues({cos(_theta), -sin(_theta), 0, 0, sin(_theta), cos(_theta), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1});
+        setValues({cos(theta), -sin(theta), 0, 0, sin(theta), cos(theta), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1});
     }
-    void updateTheta(std::chrono::duration<double> fElapstedTime, double rate)
+    void updateTheta(std::chrono::duration<double> fElapstedTime, double r)
     { 
-        _theta += rate * fElapstedTime.count();
+        rate = r;
+        _theta = rate * fElapstedTime.count();
         setValues({cos(_theta), -sin(_theta), 0, 0, sin(_theta), cos(_theta), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1});
     }
 private:
     double _theta = 0.0;
+    double rate = 1.0;
 };
 
 class projMat : public Matrix
