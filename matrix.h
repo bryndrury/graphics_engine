@@ -5,8 +5,6 @@
 #include <vector>
 #include <cmath>
 
-#include "vec3.h"
-
 class Matrix
 {
 public:
@@ -36,8 +34,6 @@ public:
     Matrix operator*(const double scalar);
     Matrix& operator*=(const double scalar);
 
-    // Matrix vec3 multiplication - I know this is technicaly incorrect, but it works for my purposes
-    vec3 operator*(const vec3& other);
 
     // set values
     void setValues(const std::vector<std::vector<double> >& values);
@@ -269,24 +265,6 @@ Matrix& Matrix::operator*=(const double scalar)
         e *= scalar;
     }
     return *this;
-}
-
-vec3 Matrix::operator*(const vec3& other)
-{
-    if (mCols == 4 && mRows == 4 && other.size() == 4)
-    {
-        vec3 result;
-        double x = (mData[0] * other.x() + mData[1] * other.y() + mData[2] * other.z());
-        double y = (mData[4] * other.x() + mData[5] * other.y() + mData[6] * other.z());
-        double z = (mData[8] * other.x() + mData[9] * other.y() + mData[10] * other.z());
-        double w = (mData[12] * other.x() + mData[13] * other.y() + mData[14] * other.z());
-        result.setValues(x,y,z,w);
-        return result;
-    }
-    else
-    {
-        std::cout << "Matrix dimensions do not match!" << std::endl;
-    }
 }
 
 

@@ -11,6 +11,7 @@ public:
     triangle() {}
     triangle(vec3 v0, vec3 v1, vec3 v2) : p{v0, v1, v2} {}
     triangle(vec3 v0, vec3 v1, vec3 v2, Uint8 l) : p{v0, v1, v2}, lum(l) {}
+    triangle(std::vector<vec3> v) : p(v) {}
 
     vec3& operator[](int i) { return p[i]; }
     vec3& begin() { return p[0]; }
@@ -26,6 +27,8 @@ public:
     return *this;
     }
 
+    vec3 norm() const { return (p[1] - p[0]).cross(p[2] - p[0]); }
+
     void setP(std::vector<vec3> v) { p = v; }
     std::vector<vec3> getP() const { return p; }
     void setLum(Uint8 l) { lum = l; }
@@ -33,6 +36,7 @@ public:
 
     vec3 normal() const { return (p[1] - p[0]).cross(p[2] - p[0]); }
     int size() const { return p.size(); }
+    void out() const { p[0].out(); p[1].out(); p[2].out(); }
 
 private:
     std::vector<vec3> p{3}; // Vertices

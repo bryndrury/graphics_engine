@@ -8,10 +8,11 @@
 class vec3 {
 public:
     // Constructors
-    vec3() : _x(0), _y(0), _z(0), _w(0) {};
-    vec3(double x, double y, double z) : _x(x), _y(y), _z(z), _w(0) {};
-    vec3(const vec3& u) : _x(u._x), _y(u._y), _z(u._z), _w(0) {};
-    vec3(double i) : _x(i), _y(i), _z(i), _w(0) {};
+    vec3() : _x(0), _y(0), _z(0) {};
+    vec3(double x, double y, double z) : _x(x), _y(y), _z(z) {};
+    vec3(const vec3& u) : _x(u._x), _y(u._y), _z(u._z) {};
+    vec3(double i) : _x(i), _y(i), _z(i) {};
+    vec3(const std::vector<double> &u) : _x(u[0]), _y(u[1]), _z(u[2]) {};
 
     // Destructor
     ~vec3() {};
@@ -20,13 +21,15 @@ public:
     double x() const { return _x; };
     double y() const { return _y; };
     double z() const { return _z; };
+    std::vector<double> getValues() const { return {_x, _y, _z}; };
+    double operator[](int i) const { return getValues()[i]; };
 
     // Setters
     void setX(double x) { _x = x; };
     void setY(double y) { _y = y; };
     void setZ(double z) { _z = z; };
     void setValues(double x, double y, double z) { _x = x; _y = y; _z = z; };
-    void setValues(double x, double y, double z, double w) { _x = x; _y = y; _z = z; _w = w; };
+
 
     // Operators - Setters
     vec3& operator=(const double i);
@@ -59,10 +62,10 @@ public:
     double dist(const vec3 &u) const;
 
     void out() const;
-    int size() const { return 4; };
+    int size() const;
 
 private:
-    double _x, _y, _z, _w;
+    double _x, _y, _z;
 };
 
 // Fast inverse square root algorithm from Quake III Arena
@@ -231,10 +234,13 @@ double vec3::dist(const vec3 &u) const
     vec3 r = *this - u;
     return r.len();
 }
-
 void vec3::out() const
 {
-    std::cout << "(" << _x << ", " << _y << ", " << _z << ", " << _w << ")" << std::endl;
+    std::cout << "(" << _x << ", " << _y << ", " << _z << ")" << std::endl;
+}
+int vec3::size() const
+{
+    return 3;
 }
 
 #endif // VEC3_H

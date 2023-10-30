@@ -4,11 +4,14 @@
 #include <strstream>
 #include <string>
 #include <algorithm>
+#include <omp.h>
 
+#include "sdl_helper.h"
 #include "vec3.h"
 #include "matrix.h"
 #include "mesh.h"
-#include "comp_funcs.h"
+#include "matricies.h"
+#include "vec_mat.h"
 
 int main(int argc, char* argv[])
 {
@@ -36,28 +39,28 @@ int main(int argc, char* argv[])
 
     mesh meshCube({
 		// SOUTH
-		triangle({ vec3(0.0f, 0.0f, 0.0f),    vec3(0.0f, 1.0f, 0.0f),    vec3(1.0f, 1.0f, 0.0f) }),
-		triangle({ vec3(0.0f, 0.0f, 0.0f),    vec3(1.0f, 1.0f, 0.0f),    vec3(1.0f, 0.0f, 0.0f) }),
+		triangle( vec3(0.0f, 0.0f, 0.0f),    vec3(0.0f, 1.0f, 0.0f),    vec3(1.0f, 1.0f, 0.0f) ),
+		triangle( vec3(0.0f, 0.0f, 0.0f),    vec3(1.0f, 1.0f, 0.0f),    vec3(1.0f, 0.0f, 0.0f) ),
 
 		// EAST                                                      
-		triangle({ vec3(1.0f, 0.0f, 0.0f),    vec3(1.0f, 1.0f, 0.0f),    vec3(1.0f, 1.0f, 1.0f) }),
-		triangle({ vec3(1.0f, 0.0f, 0.0f),    vec3(1.0f, 1.0f, 1.0f),    vec3(1.0f, 0.0f, 1.0f) }),
+		triangle( vec3(1.0f, 0.0f, 0.0f),    vec3(1.0f, 1.0f, 0.0f),    vec3(1.0f, 1.0f, 1.0f) ),
+		triangle( vec3(1.0f, 0.0f, 0.0f),    vec3(1.0f, 1.0f, 1.0f),    vec3(1.0f, 0.0f, 1.0f) ),
 
 		// NORTH                                                     
-		triangle({ vec3(1.0f, 0.0f, 1.0f),    vec3(1.0f, 1.0f, 1.0f),    vec3(0.0f, 1.0f, 1.0f) }),
-		triangle({ vec3(1.0f, 0.0f, 1.0f),    vec3(0.0f, 1.0f, 1.0f),    vec3(0.0f, 0.0f, 1.0f) }),
+		triangle( vec3(1.0f, 0.0f, 1.0f),    vec3(1.0f, 1.0f, 1.0f),    vec3(0.0f, 1.0f, 1.0f) ),
+		triangle( vec3(1.0f, 0.0f, 1.0f),    vec3(0.0f, 1.0f, 1.0f),    vec3(0.0f, 0.0f, 1.0f) ),
 
 		// WEST                                                      
-		triangle({ vec3(0.0f, 0.0f, 1.0f),    vec3(0.0f, 1.0f, 1.0f),    vec3(0.0f, 1.0f, 0.0f) }),
-		triangle({ vec3(0.0f, 0.0f, 1.0f),    vec3(0.0f, 1.0f, 0.0f),    vec3(0.0f, 0.0f, 0.0f) }),
+		triangle( vec3(0.0f, 0.0f, 1.0f),    vec3(0.0f, 1.0f, 1.0f),    vec3(0.0f, 1.0f, 0.0f) ),
+		triangle( vec3(0.0f, 0.0f, 1.0f),    vec3(0.0f, 1.0f, 0.0f),    vec3(0.0f, 0.0f, 0.0f) ),
 
 		// TOP                                                       
-		triangle({ vec3(0.0f, 1.0f, 0.0f),    vec3(0.0f, 1.0f, 1.0f),    vec3(1.0f, 1.0f, 1.0f) }),
-		triangle({ vec3(0.0f, 1.0f, 0.0f),    vec3(1.0f, 1.0f, 1.0f),    vec3(1.0f, 1.0f, 0.0f) }),
+		triangle( vec3(0.0f, 1.0f, 0.0f),    vec3(0.0f, 1.0f, 1.0f),    vec3(1.0f, 1.0f, 1.0f) ),
+		triangle( vec3(0.0f, 1.0f, 0.0f),    vec3(1.0f, 1.0f, 1.0f),    vec3(1.0f, 1.0f, 0.0f) ),
 
 		// BOTTOM                                                    
-		triangle({ vec3(1.0f, 0.0f, 1.0f),    vec3(0.0f, 0.0f, 1.0f),    vec3(0.0f, 0.0f, 0.0f) }),
-		triangle({ vec3(1.0f, 0.0f, 1.0f),    vec3(0.0f, 0.0f, 0.0f),    vec3(1.0f, 0.0f, 0.0f) }), 
+		triangle( vec3(1.0f, 0.0f, 1.0f),    vec3(0.0f, 0.0f, 1.0f),    vec3(0.0f, 0.0f, 0.0f) ),
+		triangle( vec3(1.0f, 0.0f, 1.0f),    vec3(0.0f, 0.0f, 0.0f),    vec3(1.0f, 0.0f, 0.0f) ), 
     });
 
     vec3 camera(0.0, 0.0, 0.0);
@@ -80,23 +83,64 @@ int main(int argc, char* argv[])
                 break;
             }
         }
+        SDL_SetRenderDrawColor(renderer, 0,0,0,0);
+        SDL_RenderClear(renderer);
+
+
         rotx.updateTheta(fElapstedTime,1);
         roty.updateTheta(fElapstedTime,1);
         rotz.updateTheta(fElapstedTime,1);
 
         // Once the scene is sorted, the triangles that will be rasterized will be put here
-        mesh toRaster;
+        std::vector<triangle> toRaster;
 
         // Loop through all the triangles of the mesh
+        #pragma omp parallel for num_threads(4) shared(toRaster)
         for (int triIndex = 0; triIndex < meshCube.getTris().size(); triIndex++)
         {
             triangle tri = meshCube[triIndex];
-            for (int pointIndex = 0; pointIndex < tri.getP().size(); pointIndex++)
+            // tXm(tri, rotz);
+            // tXm(tri, rotx);
+
+            // Translation vector
+            vec3 tVec(8.0,0.0,8.0);
+            tranTri(tri, tVec);
+
+            vec3 normal = tri.normal();
+            normal = normal.norm();
+
+            double facingCam = normal.dot(tri[0] - camera);
+
+            if (facingCam < 0.0)
             {
-                vec3 point = tri[pointIndex];
-                // point.out();
+                // Illumination
+                double lightIntensity = normal.dot(lightDirection);
+                tri.setLum(lightIntensity * 255.0);
+
+                // Project triangles from 3D --> 2D
+                tXm(tri, proj);
+
+                // Scale into view
+                // vec3 scaleVec(screen_width*0.5, screen_height*0.5, 1.0);
+                scaleTri(tri, screen_width, screen_height);
+
+                // Add triangle to the list of triangles to be rasterized
+                #pragma omp critical
+                toRaster.push_back(tri);
             }
         }
+        for (triangle t : toRaster) 
+        {
+            Uint8 lum = t.getLum();
+            std::vector<SDL_Vertex> verts = 
+            {
+                { SDL_FPoint{(float)t[0].x(), (float)t[0].y()}, SDL_Color{lum, lum, lum, 255}, SDL_FPoint{ 0 } },
+                { SDL_FPoint{(float)t[1].x(), (float)t[1].y()}, SDL_Color{lum, lum, lum, 255}, SDL_FPoint{ 0 } },
+                { SDL_FPoint{(float)t[2].x(), (float)t[2].y()}, SDL_Color{lum, lum, lum, 255}, SDL_FPoint{ 0 } },
+            };
+            SDL_RenderGeometry(renderer, nullptr, verts.data(), verts.size(), nullptr, 0);
+        }
+        SDL_RenderPresent(renderer);
 
         cap_framerate(starting_tick, fps);
     }

@@ -1,16 +1,6 @@
-#include <SDL2/SDL.h>
 #include <cmath>
 #include <chrono>
 #include "matrix.h"
-
-void cap_framerate(Uint32 starting_tick, int fps)
-{
-	if ((1000 / fps) > SDL_GetTicks() - starting_tick)
-	{
-		SDL_Delay(1000 / fps - (SDL_GetTicks() - starting_tick));
-		// std::cout << "FPS: " << 1000 / (SDL_GetTicks() - starting_tick) << std::endl;
-	}
-}
 
 // Rotation Matrices that inherit from Matrix
 class rotX : public Matrix
