@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <SDL2/SDL.h>
+#include <fstream>
+#include <strstream>
 #include "vec3.h"
 
 class triangle
@@ -38,9 +40,11 @@ public:
     int size() const { return p.size(); }
     void out() const { p[0].out(); p[1].out(); p[2].out(); }
 
+    Uint8 lum = 0;
+
 private:
     std::vector<vec3> p{3}; // Vertices
-    Uint8 lum; // Luminosity
+    // Uint8 lum; // Luminosity
 };
 
 class mesh
@@ -73,7 +77,35 @@ private:
 
 bool mesh::LoadFromObjectFile(std::string filename)
 {
-
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        std::cout << "Error opening file: " << filename << std::endl;
+        return false;
+    }
+    std::vector<vec3> verts;
+    while (!file.eof())
+    {
+        char line[128];
+        file.getline(line, 128);
+        std::strstream s;
+        s << line;
+        char junk;
+        if (line[0] == 'v')
+        {
+            double x, y, z;
+            s >> junk >> x >> y >> z;
+            vec3 v(x, y, z);
+            verts.push_back(v);
+        }
+        if (line[0] == 'f')
+        {
+            int f[3];
+            s >> junk >> f[0] >> f[1] >> f[2];
+            addTriangle(triangle(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1]));
+        }
+    }
+    return true;
 }
 
 #endif // MESH_H
