@@ -5,6 +5,7 @@
 #include <SDL2/SDL.h>
 #include <fstream>
 #include <strstream>
+#include <algorithm>
 #include "vec3.h"
 
 class triangle
@@ -40,6 +41,8 @@ public:
     int size() const { return p.size(); }
     void out() const { p[0].out(); p[1].out(); p[2].out(); }
 
+    void tranTri(triangle &t , vec3 &v) { for (int i = 0; i < t.size(); i++) { t[i] += v; } }
+
     Uint8 lum = 0;
 
 private:
@@ -67,6 +70,13 @@ public:
     std::vector<triangle> getTris() const { return tris; }
     void setTris(std::vector<triangle> t) { tris = t; }
     bool LoadFromObjectFile(std::string filename);
+    void sort() 
+    {
+        std::sort(tris.begin(), tris.end(), [](triangle& t1, triangle& t2) 
+            {   double z1 = (t1[0].z() + t1[1].z() + t1[2].z()) / 3.0;
+                double z2 = (t2[0].z() + t2[1].z() + t2[2].z()) / 3.0;
+                return z1 > z2;     });
+    }
 
     void addTriangle(triangle t) { tris.push_back(t); }
     int size() const { return tris.size(); }
@@ -107,5 +117,7 @@ bool mesh::LoadFromObjectFile(std::string filename)
     }
     return true;
 }
+
+void 
 
 #endif // MESH_H

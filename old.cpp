@@ -7,7 +7,7 @@
 #include <chrono>
 #include <algorithm>
 
-#define fps 30
+#define fps 6000
 
 struct vec3d
 {
@@ -195,7 +195,7 @@ int main(int argc, char* argv[]) {
 
 		std::vector<triangle> vecTrianglesToRaster;
 
-
+		#pragma omp parallel for OMP_DYNAMIC shared(vecTrianglesToRaster)
 		for (auto tri : meshCube.tris)
 		{
 			triangle triProjected, triTranslated, triRotatedZ, triRotatedZX;
@@ -266,11 +266,12 @@ int main(int argc, char* argv[]) {
 				triProjected.p[2].x *= 0.5f * screen_width;
 				triProjected.p[2].y *= 0.5f * screen_height;
 
+				#pragma omp critical
 				vecTrianglesToRaster.push_back(triProjected);
 
 			}
 		}
-
+		#pragma omp barrier
 		sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle& t1, triangle& t2)
 			{
 				float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
@@ -310,6 +311,8 @@ int main(int argc, char* argv[]) {
 		
 		// FPS limiter
 		cap_framerate( starting_tick );
+        std::cout << std::string(100, ' ') << "\r" << "Frame Time: " << (SDL_GetTicks() - starting_tick) << "ms. " << "FPS: " << 1000.0/(SDL_GetTicks() - starting_tick) << "\r" << std::flush;
+
 	}
 
 	SDL_DestroyWindow( window );

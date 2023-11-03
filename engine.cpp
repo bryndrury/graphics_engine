@@ -1,29 +1,4 @@
-#include <SDL2/SDL.h>
-#include <iostream>
-#include <fstream>
-#include <strstream>
-#include <string>
-#include <algorithm>
-#include <omp.h>
-
-#include "sdl_helper.h"
-#include "vec3.h"
-#include "matrix.h"
-#include "mesh.h"
-#include "matricies.h"
-#include "vec_mat.h"
-#include "cube.h"
-
-// To Do:
-// - Add a camera movement system.
-// - Add a lighting system.
-// - Add a texture system.
-// - Add a model loader.
-// - Add scene (model) organiser.
-//     - create a scene class.
-//     - let the class handle all the properties of the objects.
-//     - pass the class to the renderer.  
-
+#include "includes.h"
 
 int main(int argc, char* argv[])
 {
@@ -51,8 +26,13 @@ int main(int argc, char* argv[])
     projMat proj(0.1, 1000.0, 90.0, screen_height/screen_width);
 
     vec3 camera(0.0, 0.0, 0.0);
-    // vec3 tVec(0.0,0.0,3.0);
     vec3 lightDirection(0.0,0.0,-1.0);
+
+    // Object properties:
+    mesh object;
+    object.LoadFromObjectFile("objects/teapot.obj");
+    // Position: 
+    // vec3 tVec(0.0,0.0,3.0);
 
     Uint32 starting_tick;
     SDL_Event event;
@@ -70,66 +50,29 @@ int main(int argc, char* argv[])
                 running = false;
                 break;
             }
-            // SDL_Keycode keyInput = event.key.keysym.sym;
-            // if (event.type == SDL_KEYDOWN)
-            // {
-            //     if (keyInput == SDLK_SPACE)
-            //     {
-            //         tVec += vec3(0.0,0.0,0.1);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "SPACE" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_LSHIFT)
-            //     {
-            //         tVec += vec3(0.0,0.0,-0.1);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "SHIFT" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_w)
-            //     {
-            //         tVec += vec3(0.0,0.1,0.0);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "w" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_s)
-            //     {
-            //         tVec += vec3(0.0,-0.1,0.0);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "s" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_a)
-            //     {
-            //         tVec += vec3(0.1,0.0,0.0);
-            //         std::cout << "Key Pressed: " << keyInput << "\t\t" << "a" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_d)
-            //     {
-            //         tVec += vec3(-0.1,0.0,0.0);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "d" << std::endl;
-            //     }
-            // }
         }
         SDL_SetRenderDrawColor(renderer, 0,0,0,0);
         SDL_RenderClear(renderer);
 
-        rotx.updateTheta(fElapstedTime,0.5);
+        // rotx.updateTheta(fElapstedTime,0.5);
         roty.updateTheta(fElapstedTime,0.3);
-        rotz.updateTheta(fElapstedTime,0.7);
+        // rotz.updateTheta(fElapstedTime,0.7);
 
         // Once the scene is sorted, the triangles that will be rasterized will be put here
-        std::vector<triangle> toRaster;
-
-        mesh object;
-        object.LoadFromObjectFile("objects/teapot.obj");
+        mesh toRaster;
 
         // Loop through all the triangles of the mesh
-        #pragma omp parallel for num_threads(4) shared(toRaster) OMP_DYNAMIC
-
-        // for (int triIndex = 0; triIndex < meshCube.getTris().size(); triIndex++)
-        for (int triIndex = 0; triIndex < object.getTris().size(); triIndex++)
+        int loopend = object.getTris().size();
+        #pragma omp parallel for shared(toRaster) OMP_DYNAMIC
+        for (int triIndex = 0; triIndex < loopend; triIndex++)
         {
+
             triangle tri = object[triIndex];
             // Rotate the triangles
             tXm(tri, rotz);     tXm(tri, rotx);     tXm(tri, roty);
 
             // Translation vector
-            vec3 tVec = vec3(0.0,0.0,10.0);
+            vec3 tVec = vec3(0.0,0.0,6.0);
             tranTri(tri, tVec);
 
             // Calculate the normal of the triangle
@@ -143,7 +86,7 @@ int main(int argc, char* argv[])
             {
                 // Illumination
                 Uint8 luminance = normal.dot(lightDirection) * 255;
-                tri.setLum( luminance );
+                tri.lum = luminance ;
 
                 // Project triangles from 3D to 2D
                 tXm(tri, proj);
@@ -153,23 +96,22 @@ int main(int argc, char* argv[])
 
                 // Add triangle to the list of triangles to be rasterized
                 #pragma omp critical
-                toRaster.push_back(tri);
+                toRaster.addTriangle (tri);
             }
         }
-        sort(toRaster.begin(), toRaster.end(), [](triangle& t1, triangle& t2) 
-            {   double z1 = (t1[0].z() + t1[1].z() + t1[2].z()) / 3.0;
-                double z2 = (t2[0].z() + t2[1].z() + t2[2].z()) / 3.0;
-                return z1 > z2;     });
+        #pragma omp barrier
+        toRaster.sort();
 
-        #pragma omp critical
-        for (triangle t : toRaster) 
-        {   
-            renderTriangle(renderer, t);
-            // renderWireframe(renderer, t);
+        // #pragma omp critical
+        for (triangle t : toRaster.getTris()) 
+        { 
+            // renderTriangle(renderer, t);
+            renderWireframe(renderer, t);
         }
         SDL_RenderPresent(renderer);
-
-        cap_framerate(starting_tick, fps);
+        fpsCounter(starting_tick);
+        // std::cout << std::string(100, ' ') << "\r" << "Frame Time: " << (SDL_GetTicks() - starting_tick) << "ms. " << "FPS: " << 1000.0/(SDL_GetTicks() - starting_tick) << "\r" << std::flush;
+        // cap_framerate(starting_tick, fps);
     }
 
     return 0;
