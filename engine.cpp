@@ -6,19 +6,13 @@
 #include <algorithm>
 #include <omp.h>
 
-#include "sdl_helper.h"
-#include "vec3.h"
-#include "matrix.h"
-#include "mesh.h"
-#include "matricies.h"
-#include "vec_mat.h"
-#include "cube.h"
+#include "includes.h"
 
 // To Do:
 // - Add a camera movement system.
-// - Add a lighting system.
+// + Add a lighting system.
 // - Add a texture system.
-// - Add a model loader.
+// + Add a model loader.
 // - Add scene (model) organiser.
 //     - create a scene class.
 //     - let the class handle all the properties of the objects.
@@ -101,7 +95,7 @@ int main(int argc, char* argv[])
         rotz.updateTheta(fElapstedTime,0.7);
 
         // Once the scene is sorted, the triangles that will be rasterized will be put here
-        std::vector<triangle> toRaster;
+        mesh toRaster;
 
         mesh object;
         object.LoadFromObjectFile("objects/teapot.obj");
