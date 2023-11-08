@@ -28,16 +28,16 @@
 int main(int argc, char* argv[])
 {
     // Create Window
-	float screen_width = 1280;
-	float screen_height = 720;
+	double screen_width = 1280; //640
+	double screen_height = 720; //480
     int fps = 60;
-	SDL_Init( SDL_INIT_EVERYTHING );
+	SDL_Init( SDL_INIT_VIDEO );
 	SDL_Window* window = NULL;
 	SDL_Renderer* renderer = NULL;
 
 	// Render Black Screen
-	window = SDL_CreateWindow("engine", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, (SDL_WINDOW_SHOWN, SDL_WINDOW_RESIZABLE));
-	renderer = SDL_CreateRenderer(window, -1, (SDL_RENDERER_ACCELERATED, SDL_RENDERER_PRESENTVSYNC));
+	window = SDL_CreateWindow("engine", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, (SDL_WINDOW_SHOWN, SDL_WINDOW_RESIZABLE));//, SDL_VIDEO_OPENGL, SDL_WINDOW_OPENGL));
+	renderer = SDL_CreateRenderer(window, -1, (SDL_RENDERER_ACCELERATED, SDL_RENDERER_PRESENTVSYNC,  SDL_VIDEO_METAL));//, SDL_WINDOW_OPENGL, SDL_VIDEO_OPENGL));
 	SDL_SetRenderDrawColor( renderer, 0, 0, 0, 255 );
 	SDL_RenderClear( renderer );
     SDL_RenderPresent( renderer );
@@ -57,6 +57,11 @@ int main(int argc, char* argv[])
     Uint32 starting_tick;
     SDL_Event event;
     bool running = true;
+    int count = 0;
+
+    bool wireframe = false;
+    bool shade = true;
+    bool randColor = false;
 
     while (running) 
     {
@@ -70,40 +75,23 @@ int main(int argc, char* argv[])
                 running = false;
                 break;
             }
-            // SDL_Keycode keyInput = event.key.keysym.sym;
-            // if (event.type == SDL_KEYDOWN)
-            // {
-            //     if (keyInput == SDLK_SPACE)
-            //     {
-            //         tVec += vec3(0.0,0.0,0.1);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "SPACE" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_LSHIFT)
-            //     {
-            //         tVec += vec3(0.0,0.0,-0.1);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "SHIFT" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_w)
-            //     {
-            //         tVec += vec3(0.0,0.1,0.0);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "w" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_s)
-            //     {
-            //         tVec += vec3(0.0,-0.1,0.0);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "s" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_a)
-            //     {
-            //         tVec += vec3(0.1,0.0,0.0);
-            //         std::cout << "Key Pressed: " << keyInput << "\t\t" << "a" << std::endl;
-            //     }
-            //     else if (keyInput == SDLK_d)
-            //     {
-            //         tVec += vec3(-0.1,0.0,0.0);
-            //         std::cout << "Key Pressed: " << keyInput << "\t" << "d" << std::endl;
-            //     }
-            // }
+            // check if event is key pressed
+            if (event.type == SDL_KEYDOWN)
+            {
+                // check which key was pressed
+                if (event.key.keysym.sym == SDLK_t)
+                {
+                    if (wireframe) { wireframe = false; } else { wireframe = true; }
+                }
+                if (event.key.keysym.sym == SDLK_y)
+                {
+                    if (shade) { shade = false; } else { shade = true; }
+                }
+                if (event.key.keysym.sym == SDLK_r)
+                {
+                    if (randColor) { randColor = false; } else { randColor = true; }
+                }
+            }
         }
         SDL_SetRenderDrawColor(renderer, 0,0,0,0);
         SDL_RenderClear(renderer);
@@ -118,18 +106,19 @@ int main(int argc, char* argv[])
         mesh object;
         object.LoadFromObjectFile("objects/teapot.obj");
 
-        // Loop through all the triangles of the mesh
-        #pragma omp parallel for num_threads(4) shared(toRaster) OMP_DYNAMIC
+        // Loop through all the triangles of the mesh 
+        // set OMP threads to 4
 
-        // for (int triIndex = 0; triIndex < meshCube.getTris().size(); triIndex++)
-        for (int triIndex = 0; triIndex < object.getTris().size(); triIndex++)
+        #pragma omp parallel for shared(toRaster) OMP_DYNAMIC num_threads(4)
+        for (triangle tri : object.getTris())
         {
-            triangle tri = object[triIndex];
+
+            // triangle tri = object[triIndex];
             // Rotate the triangles
             tXm(tri, rotz);     tXm(tri, rotx);     tXm(tri, roty);
 
             // Translation vector
-            vec3 tVec = vec3(0.0,0.0,10.0);
+            vec3 tVec = vec3(0.0,0.0,7.0);
             tranTri(tri, tVec);
 
             // Calculate the normal of the triangle
@@ -141,34 +130,32 @@ int main(int argc, char* argv[])
             // Only draw the triangle if it's visible
             if (facingCam < 0.0)
             {
-                // Illumination
-                Uint8 luminance = normal.dot(lightDirection) * 255;
-                tri.setLum( luminance );
-
                 // Project triangles from 3D to 2D
                 tXm(tri, proj);
 
                 // Scale into view
                 scaleTri(tri, screen_width, screen_height);
 
+                // Illumination
+                tri.setLum( normal.dot(lightDirection) * 255 );
+
                 // Add triangle to the list of triangles to be rasterized
                 #pragma omp critical
-                toRaster.push_back(tri);
+                toRaster.addTriangle(tri);
             }
         }
-        sort(toRaster.begin(), toRaster.end(), [](triangle& t1, triangle& t2) 
-            {   double z1 = (t1[0].z() + t1[1].z() + t1[2].z()) / 3.0;
-                double z2 = (t2[0].z() + t2[1].z() + t2[2].z()) / 3.0;
-                return z1 > z2;     });
+        #pragma omp barrier
+        toRaster.sort();
 
         #pragma omp critical
-        for (triangle t : toRaster) 
-        {   
-            renderTriangle(renderer, t);
-            // renderWireframe(renderer, t);
+        for (triangle t : toRaster.getTris()) 
+        { 
+            if (shade) { renderTriangle(renderer, t, randColor); }
+            if (wireframe) { renderWireframe(renderer, t); }
         }
         SDL_RenderPresent(renderer);
 
+        if (count > 50) { fpsCounter(starting_tick); count = 0;} else { count++; }
         cap_framerate(starting_tick, fps);
     }
 
