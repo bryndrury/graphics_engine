@@ -11,9 +11,9 @@ class triangle
 {
 public:
     triangle() {}
-    triangle(vec3 v0, vec3 v1, vec3 v2) : p{v0, v1, v2} {}
+    triangle(vec3 v0, vec3 v1, vec3 v2) : p{v0, v1, v2}, lum(0) {}
     triangle(vec3 v0, vec3 v1, vec3 v2, Uint8 l) : p{v0, v1, v2}, lum(l) {}
-    triangle(std::vector<vec3> v) : p(v) {}
+    triangle(std::vector<vec3> v) : p(v), lum(0) {}
 
     vec3& operator[](int i) { return p[i]; }
     vec3& begin() { return p[0]; }
@@ -40,11 +40,11 @@ public:
     int size() const { return p.size(); }
     void out() const { p[0].out(); p[1].out(); p[2].out(); }
 
-    Uint8 lum = 0;
+    void tranTri(triangle &t , vec3 &v) { for (int i = 0; i < t.size(); i++) { t[i] += v; } }
 
 private:
     std::vector<vec3> p{3}; // Vertices
-    // Uint8 lum; // Luminosity
+    Uint8 lum; // Luminosity
 };
 
 class mesh
