@@ -51,5 +51,4 @@ void renderWireframe(SDL_Renderer* renderer, triangle& t)
 	SDL_RenderDrawLineF( renderer, t[0].x(), t[0].y(), t[1].x(), t[1].y() );
 	SDL_RenderDrawLineF( renderer, t[1].x(), t[1].y(), t[2].x(), t[2].y() );
 	SDL_RenderDrawLineF( renderer, t[0].x(), t[0].y(), t[2].x(), t[2].y() );
-
 }

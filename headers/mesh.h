@@ -73,8 +73,12 @@ public:
     int size() const { return tris.size(); }
     void sort();
 
+    void setPos(vec3 v) { pos = v; }
+    vec3 getPos() const { return pos; }
+
 private:
     std::vector<triangle> tris;
+    vec3 pos;
 };
 
 bool mesh::LoadFromObjectFile(std::string filename)

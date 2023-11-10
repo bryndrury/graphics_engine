@@ -5,3 +5,4 @@
 #include "headers/matrices.h"
 #include "headers/vec_mat.h"
 #include "headers/cube.h"
+#include "headers/obj.h"
