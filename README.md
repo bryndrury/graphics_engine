@@ -2,6 +2,4 @@
  
 uses my vector and matrix classes.
 
-uses SDL2.
-
-only designed to show an object file.
+uses SDL2 and omp.
